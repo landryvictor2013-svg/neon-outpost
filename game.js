@@ -409,9 +409,18 @@ function attachPeerConnection(conn,role,session=onlineSession){
  session.channel=makePeerWrapper(conn);
  session.transport='peerjs';
  let opened=false;
+ const connectionTimeout=setTimeout(()=>{
+  if(opened||onlineSession!==session)return;
+  const pc=conn.peerConnection;
+  const iceState=pc?.iceConnectionState||pc?.connectionState||'non disponible';
+  const message=`Le salon a été trouvé, mais le canal réseau ne s’est pas ouvert (${iceState}). Le relais TURN intégré à PeerJS a été réactivé. Annule le salon, recrée-en un et réessaie.`;
+  setP2PStatus(message);
+  $('roomStatusText').textContent=message;
+ },20000);
  const onOpen=()=>{
   if(opened||onlineSession!==session)return;
   opened=true;
+  clearTimeout(connectionTimeout);
   if(role==='guest'){
    setP2PStatus('Canal ouvert. Vérification du salon…');
    $('roomStatusText').textContent='Canal ouvert. Vérification du salon…';
@@ -424,6 +433,7 @@ function attachPeerConnection(conn,role,session=onlineSession){
  conn.on('open',onOpen);
  conn.on('data',handlePeerMessage);
  conn.on('close',()=>{
+  clearTimeout(connectionTimeout);
   if(onlineSession!==session)return;
   session.peerReady=false;session.channel=null;
   if(role==='host')$('startCoopButton').disabled=true;
@@ -431,11 +441,22 @@ function attachPeerConnection(conn,role,session=onlineSession){
   $('roomStatusText').textContent='Connexion interrompue.';
  });
  conn.on('error',e=>{
+  clearTimeout(connectionTimeout);
   if(onlineSession!==session)return;
   const detail=e?.message||e?.type||'réseau';
   setP2PStatus('Erreur de connexion : '+detail+'. Réessaie de rejoindre le salon.');
   $('roomStatusText').textContent='Erreur de connexion : '+detail;
  });
+ const pc=conn.peerConnection;
+ if(pc?.addEventListener){
+  pc.addEventListener('iceconnectionstatechange',()=>{
+   if(onlineSession!==session||opened)return;
+   if(pc.iceConnectionState==='failed'){
+    const message='Le réseau a refusé la connexion WebRTC. Le jeu utilise maintenant les relais TURN par défaut de PeerJS; vérifie aussi qu’aucun des deux appareils ne bloque WebRTC.';
+    setP2PStatus(message);$('roomStatusText').textContent=message;
+   }
+  });
+ }
  // PeerJS may have opened the channel before the handlers were attached.
  if(conn.open)onOpen();
 }
@@ -449,14 +470,6 @@ function makeRoomCode(){
  if(window.crypto?.getRandomValues)crypto.getRandomValues(values);
  else for(let i=0;i<6;i++)values[i]=Math.floor(Math.random()*0xFFFFFFFF);
  return Array.from(values,v=>alphabet[v%alphabet.length]).join('');
-}
-function peerIceConfig(){
- // Same direct WebRTC/STUN setup as the earlier working build; no account or
- // private TURN key is required for ordinary networks.
- return {iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:global.stun.twilio.com:3478?transport=udp'}
- ]};
 }
 function createQuickRoom(){
  if(!window.Peer){setP2PStatus('La bibliothèque multijoueur n’a pas chargé. Recharge la page et réessaie.');return;}
@@ -477,7 +490,7 @@ function createQuickRoom(){
  $('cancelRoomButton').onclick=cancelRoom;
  setP2PStatus('Connexion au service de salons…');
  try{
-  rtcPeer=new window.Peer(peerId,{debug:0,config:peerIceConfig()});
+  rtcPeer=new window.Peer(peerId,{debug:1});
   rtcPeer.on('open',id=>{
    if(onlineSession!==session)return;
    const short=String(id).replace(/^neonoutpost-/,'').toUpperCase();
@@ -515,7 +528,7 @@ function joinQuickRoom(){
  $('cancelRoomButton').onclick=cancelRoom;
  setP2PStatus('Connexion au service de salons…');
  try{
-  rtcPeer=new window.Peer({debug:0,config:peerIceConfig()});
+  rtcPeer=new window.Peer({debug:1});
   rtcPeer.on('open',()=>{
    if(onlineSession!==session)return;
    const peerId='neonoutpost-'+code.toLowerCase();

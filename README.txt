@@ -23,7 +23,7 @@ Les 20 modèles ont maintenant des silhouettes de chasseurs sci-fi plus travaill
 
 PERFORMANCES RÉSEAU
 L’ancienne version envoyait une copie complète de l’état du jeu (dont les particules et les effets) environ 11 fois par seconde. Cette version envoie un état réseau réduit, limite les objets purement visuels, évite d’empiler les paquets quand la connexion ralentit et interpole les positions entre les mises à jour.
-Le jeu utilise PeerJS + WebRTC avec STUN pour établir une connexion directe. Aucun compte, clé TURN ou inscription n’est nécessaire pour l’utilisation normale. Comme toute connexion WebRTC directe, certains réseaux très restrictifs peuvent toutefois bloquer le P2P; ce cas particulier nécessite un relais TURN hébergé.
+Le jeu utilise PeerJS + WebRTC avec sa configuration ICE par défaut. Celle-ci comprend STUN et les relais TURN fournis par PeerJS. Important : ne pas remplacer cette configuration par un objet ICE STUN-only, car cela désactive les relais TURN intégrés et peut bloquer les joueurs sur des réseaux différents. Aucun compte Metered ni clé personnelle n’est nécessaire pour utiliser les relais PeerJS. Comme tout relais public, la disponibilité et les règles d’utilisation dépendent du service PeerJS.
 
 
 SAUVEGARDES
@@ -31,3 +31,7 @@ La progression (scores, gemmes, skins et améliorations) reste sauvegardée loca
 
 PC / MOBILE
 Le coop fonctionne entre PC et mobile. Chaque joueur choisit son type de commandes dans Paramètres.
+
+
+CORRECTIF RÉSEAU — CONFIGURATION PEERJS RESTAURÉE
+La version précédente fournissait explicitement une liste ICE contenant seulement STUN; cela remplaçait les valeurs par défaut de PeerJS et retirait ses relais TURN. Cette version n’envoie plus d’option `config` au constructeur PeerJS : elle réutilise les serveurs STUN/TURN intégrés. Si une connexion ne s’ouvre toujours pas après 20 secondes, le salon affiche maintenant un diagnostic au lieu de rester indéfiniment sur « Ouverture de la connexion ».
