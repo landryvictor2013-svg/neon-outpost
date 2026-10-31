@@ -1,0 +1,26 @@
+CONFIGURER LE RELAIS TURN (À FAIRE UNE SEULE FOIS PAR LE PROPRIÉTAIRE DU JEU)
+
+Pourquoi ? PeerJS trouve le salon, mais le trafic de jeu passe directement entre les deux navigateurs. Certains routeurs et réseaux mobiles bloquent cette connexion directe. PeerJS indique qu’un relais TURN est nécessaire dans ce cas.
+
+1. Ouvre https://dashboard.metered.ca/ et crée un compte Metered.
+2. Dans TURN Server / Credentials, crée une credential.
+3. Sur cette credential, ouvre Get credential, puis Show API Key. Copie cette API key propre à la credential.
+4. Dans Dashboard / Developers, copie le domaine de ton application (ex. monjeu.metered.live : il faut seulement écrire monjeu dans le champ ci-dessous).
+5. Dans game.js, en haut du fichier, remplace les deux valeurs vides :
+
+   const METERED_TURN_DOMAIN='monjeu';
+   const METERED_TURN_API_KEY='COLLE_ICI_L_API_KEY_DE_LA_CREDENTIAL';
+
+6. Ne colle JAMAIS la Secret Key de ton compte Metered. Seule la clé API affichée dans Get credential est prévue pour être utilisée côté navigateur.
+7. Republie le dossier complet sur Netlify. Les deux joueurs doivent fermer l’ancienne page et recharger le site.
+
+À savoir :
+- La clé TURN doit être ajoutée une seule fois dans la version publiée du jeu. Les deux joueurs n’ont pas à créer de compte ni à saisir une clé.
+- La clé API de credential sera visible dans le code public du site; c’est normal pour cette clé limitée à une credential. N’utilise jamais la Secret Key générale de ton compte.
+- Le jeu récupère automatiquement les serveurs TURN au lancement du salon et utilise STUN en complément.
+- Metered indique que le forfait gratuit TURN inclut actuellement 500 MB de trafic mensuel. Vérifie le quota et les tarifs dans ton tableau de bord avant une utilisation importante.
+- Une nouvelle credential peut prendre jusqu’à deux minutes avant de fonctionner partout.
+
+Documentation officielle :
+https://www.metered.ca/docs/turn-server-service/quickstart/
+https://www.metered.ca/docs/turn-rest-api/
