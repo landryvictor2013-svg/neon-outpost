@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b16">
+  <meta name="description" content="NEON OUTPOST — défends ton secteur, survis aux vagues et grimpe dans le classement.">
+  <title>NEON OUTPOST — Arcade Survival</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+  <canvas id="gameCanvas" aria-label="Jeu NEON OUTPOST"></canvas>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <button class="brand" id="brandHome" aria-label="Retour au menu"><span class="brand-icon">N</span><span>NEON<span class="brand-dim">OUTPOST</span></span></button>
+    <div class="top-status"><span class="status-dot"></span> SECTEUR 07 <i></i> ARÈNE ACTIVE</div>
+    <div class="top-actions"><button class="top-coop" id="coopButton">COOP</button><button class="top-settings" id="topSettings" aria-label="Paramètres">⚙</button></div>
+  </header>
+
+  <main id="homeScreen" class="home-screen">
+    <section class="hero-block">
+      <div class="eyebrow"><span class="eyebrow-line"></span> ARCADE SURVIVAL / 001</div>
+      <h1>HOLD THE<br><span>OUTPOST.</span></h1>
+      <p class="hero-copy">Des vagues, des boss, des objectifs et des récompenses.<br>Combien de temps peux-tu tenir ?</p>
+      <div class="hero-actions">
+        <button class="btn-primary" id="playButton"><span>▶</span> LANCER UNE PARTIE</button>
+        <button class="btn-quiet" id="howButton">COMMENT JOUER <span>↗</span></button>
+      </div>
+      <div class="hero-foot"><span>01 — SURVIS</span><span class="foot-divider"></span><span>02 — AMÉLIORE-TOI</span><span class="foot-divider"></span><span>03 — DOMINE</span></div>
+    </section>
+
+    <section class="dashboard">
+      <div class="dashboard-top"><div><div class="section-kicker">CENTRE DE COMMANDEMENT</div><h2>TON TABLEAU DE BORD</h2></div><div class="live-chip"><span></span> SAUVEGARDE LOCALE</div></div>
+      <div class="stat-grid">
+        <article class="stat-card"><div class="stat-label">MEILLEUR SCORE</div><div class="stat-value" id="bestScore">000000</div><div class="stat-note">TOUS MODES</div><span class="stat-symbol">✳</span></article>
+        <article class="stat-card"><div class="stat-label">PARTIES JOUÉES</div><div class="stat-value" id="gamesPlayed">0</div><div class="stat-note">DEPUIS LE DÉBUT</div><span class="stat-symbol">◷</span></article>
+        <article class="stat-card"><div class="stat-label">MEILLEURE VAGUE</div><div class="stat-value" id="bestWave">0</div><div class="stat-note">VAGUES TERMINÉES</div><span class="stat-symbol">⌁</span></article>
+      </div>
+      <div class="currency-strip"><div class="currency-total"><span class="gem-icon">◆</span><span>TES GEMMES</span><b id="gemsHome">0</b><small id="nukesHome">NUKES : 0</small></div><button id="shopButton">OUVRIR LE MARCHÉ <span>→</span></button></div>
+      <div class="dashboard-lower">
+        <div class="leader-card">
+          <div class="card-heading"><div><div class="section-kicker">HALL OF FAME</div><h3>MEILLEURS SCORES</h3></div><span class="tiny-tag">TOP 5</span></div>
+          <div class="score-table" id="homeLeaderboard"></div>
+          <button class="text-link" id="allScoresButton">VOIR LE CLASSEMENT COMPLET <span>→</span></button>
+        </div>
+        <div class="right-stack">
+          <div class="mode-card"><div class="card-heading"><div><div class="section-kicker">CHOISIS TON DÉFI</div><h3>MODE DE JEU</h3></div><span class="mode-count">04</span></div>
+            <div class="mode-options" id="modeOptions">
+              <button class="mode-option selected" data-mode="classic"><span class="mode-icon">◈</span><span><b>CLASSIQUE</b><small>Le défi original</small></span><span class="mode-check">✓</span></button>
+              <button class="mode-option" data-mode="rush"><span class="mode-icon">ϟ</span><span><b>RUSH</b><small>Vagues plus rapides</small></span><span class="mode-check">✓</span></button>
+              <button class="mode-option" data-mode="survival"><span class="mode-icon">⬡</span><span><b>SURVIE</b><small>Une seule vie, aucune pitié</small></span><span class="mode-check">✓</span></button>
+              <button class="mode-option" data-mode="multiplayer"><span class="mode-icon">✦</span><span><b>COOP EN LIGNE</b><small>Avec un code de salon · sans inscription</small></span><span class="mode-check">✓</span></button>
+            </div>
+          </div>
+          <div class="bottom-mini"><div><span class="mini-icon">⌘</span><span><b id="achievementCount">0 / 6</b><small>SUCCÈS DÉBLOQUÉS</small></span></div><button id="achievementsButton">VOIR <span>↗</span></button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section id="gameScreen" class="game-screen hidden">
+    <div class="game-topline"><button class="hud-button" id="exitGame">← MENU</button><div class="arena-title"><span class="status-dot"></span> SECTEUR 07 <span class="arena-sep">/</span> <b id="activeMode">CLASSIQUE</b></div><button class="hud-button" id="pauseGame">Ⅱ PAUSE</button></div>
+    <div class="hud-left"><div class="hud-box"><small>SCORE</small><strong id="liveScore">000000</strong></div><div class="hud-box"><small>RECORD</small><strong id="liveBest">000000</strong></div></div>
+    <div class="hud-center"><div class="wave-caption">VAGUE</div><div class="wave-number" id="waveNumber">01</div><div class="wave-sub" id="waveSub">PRÉPARE-TOI</div><div id="bossBar" class="boss-bar hidden"><b id="bossName">VAISSEAU COMMANDANT</b><div><i id="bossFill"></i></div></div></div>
+    <div class="hud-right"><div class="health-label"><span>INTÉGRITÉ</span><b id="healthText">100%</b></div><div class="health-track"><div id="healthFill"></div></div><div class="hud-mini" id="dashStatus">DASH DISPONIBLE <span>⇧</span></div><div class="boost-status" id="boostStatus">ASTÉROÏDES → BOOSTS</div><div class="companion-status hidden" id="companionStatus"></div><div class="nuke-status" id="nukeStatus">NUKE × 0 <kbd>N</kbd></div></div>
+    <div id="missionCard" class="mission-card"><small>OBJECTIF BONUS</small><b id="missionTitle">ÉLIMINE 6 VAISSEAUX</b><div class="mission-track"><i id="missionFill"></i></div><span id="missionProgress">0 / 6 · GEMMES BONUS</span><div id="missionExtra" class="mission-extra"></div></div><div id="comboHud" class="combo-hud hidden">COMBO <b id="comboValue">x1.12</b></div><div class="game-bottom"><span id="gameHint">ZQSD / WASD POUR BOUGER</span><span>SOURIS : VISER / CLIC : TIRER · ESPACE : DASH · N : NUKE</span></div>
+  </section>
+
+  <section id="pauseOverlay" class="overlay hidden"><div class="dialog"><div class="section-kicker">SESSION SUSPENDUE</div><h2>ON FAIT UNE<br><em>PAUSE.</em></h2><button class="btn-primary full" id="resumeButton">REPRENDRE <span>→</span></button><button class="btn-secondary full" id="restartPause">RECOMMENCER</button><button class="btn-secondary full" id="quitPause">RETOUR AU MENU</button></div></section>
+  <section id="gameOverOverlay" class="overlay hidden"><div class="dialog gameover-dialog"><div class="section-kicker">FIN DE TRANSMISSION</div><h2>OUTPOST<br><em>PERDU.</em></h2><div class="final-score-label">SCORE FINAL</div><div class="final-score" id="finalScore">000000</div><div class="result-grid"><div><small>VAGUE ATTEINTE</small><b id="finalWave">0</b></div><div><small>ENNEMIS ÉLIMINÉS</small><b id="finalKills">0</b></div><div><small>TEMPS SURVÉCU</small><b id="finalTime">0:00</b></div></div><div id="newRecord" class="new-record hidden">✦ NOUVEAU RECORD PERSONNEL ✦</div><div class="gem-reward"><span>◆ GEMMES GAGNÉES</span><b id="finalGems">+0</b></div><button class="btn-primary full" id="retryButton">REJOUER <span>→</span></button><button class="btn-secondary full" id="gameOverMenu">RETOUR AU MENU</button></div></section>
+
+  <section id="settingsPanel" class="side-panel hidden"><div class="panel-head"><div><div class="section-kicker">CONFIGURATION</div><h2>PARAMÈTRES</h2></div><button class="close-panel" data-close>✕</button></div><div class="panel-content">
+    <div class="panel-section"><h3>COMMANDES</h3><p class="panel-desc">Clique sur une touche puis appuie sur celle que tu veux utiliser.</p><div id="keyBindings" class="key-bindings"></div></div>
+    <div class="panel-section"><h3>COMMANDES / APPAREIL</h3><label class="range-row"><span><b>Type de commandes</b><small>Choisis l'interface PC ou mobile</small></span><select id="controlMode"><option value="pc">PC — clavier / souris</option><option value="mobile">MOBILE — tactile</option></select></label></div><div class="panel-section"><h3>PRÉFÉRENCES</h3><label class="toggle-row"><span><b>Effets sonores</b><small>Petits sons pendant la partie</small></span><input type="checkbox" id="soundToggle" checked><i></i></label><label class="toggle-row"><span><b>Effets visuels</b><small>Particules, explosions et secousses</small></span><input type="checkbox" id="effectsToggle" checked><i></i></label><label class="toggle-row"><span><b>Vibrations</b><small>Sur appareils mobiles compatibles</small></span><input type="checkbox" id="vibrationToggle" checked><i></i></label><label class="range-row"><span><b>Sensibilité</b><output id="sensitivityValue">6</output></span><input type="range" id="sensitivity" min="1" max="10" value="6"></label><label class="range-row"><span><b>Difficulté</b><output id="difficultyValue">Normale</output></span><input type="range" id="difficulty" min="1" max="3" value="2"></label></div>
+    <button class="btn-secondary full" id="resetSettings">RÉINITIALISER LES PARAMÈTRES</button>
+  </div></section>
+
+  <section id="scoresPanel" class="side-panel hidden"><div class="panel-head"><div><div class="section-kicker">HALL OF FAME</div><h2>CLASSEMENT</h2></div><button class="close-panel" data-close>✕</button></div><div class="panel-content"><div class="filter-tabs" id="scoreFilters"><button class="active" data-filter="all">TOUS</button><button data-filter="classic">CLASSIQUE</button><button data-filter="rush">RUSH</button><button data-filter="survival">SURVIE</button><button data-filter="multiplayer">COOP</button></div><div class="full-score-table" id="fullLeaderboard"></div><p class="panel-desc score-footnote" id="scoreFootnote">Tes scores locaux sont enregistrés sur cet appareil.</p><button class="btn-secondary full" id="clearScores">EFFACER LES SCORES</button></div></section>
+
+  <section id="howPanel" class="side-panel hidden"><div class="panel-head"><div><div class="section-kicker">PREMIÈRE MISSION</div><h2>COMMENT JOUER</h2></div><button class="close-panel" data-close>✕</button></div><div class="panel-content"><div class="instruction"><kbd>W A S D</kbd><span><b>Déplacements</b><small>Déplace ton vaisseau dans l'arène.</small></span></div><div class="instruction"><kbd>CLIC</kbd><span><b>Tirer</b><small>Déplace la souris pour orienter ton vaisseau et tirer sur les ennemis.</small></span></div><div class="instruction"><kbd>ESPACE</kbd><span><b>Dash</b><small>Fais une esquive rapide pour éviter les attaques.</small></span></div><div class="instruction"><kbd>ÉCHAP</kbd><span><b>Pause</b><small>Suspends ta partie à tout moment.</small></span></div><div class="instruction"><kbd>MOBILE</kbd><span><b>Écran tactile</b><small>Choisis MOBILE dans les paramètres : joystick à gauche, tir automatique vers la cible la plus proche, dash et NUKE à droite.</small></span></div><div class="tip-box">✦ Détruis les ennemis et les astéroïdes. Les astéroïdes peuvent laisser tomber des boosts : tir rapide, triple tir, bouclier, score x2 ou réparation. Achète un drone d’escorte au marché : il combat avec toi jusqu’à sa destruction, mais ne peut pas être soigné.</div><button class="btn-primary full" id="howPlayNow">COMPRIS, ON Y VA <span>→</span></button></div></section>
+
+  <section id="achievementsPanel" class="side-panel hidden"><div class="panel-head"><div><div class="section-kicker">TES EXPLOITS</div><h2>SUCCÈS</h2></div><button class="close-panel" data-close>✕</button></div><div class="panel-content"><div id="achievementList" class="achievement-list"></div></div></section>
+  <section id="shopPanel" class="side-panel hidden"><div class="panel-head"><div><div class="section-kicker">DÉPENSE TES RÉCOMPENSES</div><h2>MARCHÉ NOIR</h2></div><button class="close-panel" data-close>✕</button></div><div class="panel-content"><div class="shop-wallet"><span>◆ TON SOLDE</span><b id="shopGems">0</b><small id="shopNukes">NUKES EN STOCK : 0</small></div><div class="panel-section"><h3>ARMES SPÉCIALES</h3><div id="shopItems" class="shop-grid"></div></div><div class="panel-section"><h3>AMÉLIORATIONS PERMANENTES</h3><p class="panel-desc">Dépense tes gemmes pour renforcer ton vaisseau et ton drone. Chaque niveau reste débloqué entre les parties.</p><div class="upgrade-group-title">VAISSEAU PRINCIPAL</div><div id="shopShipUpgrades" class="upgrade-list"></div><div class="upgrade-group-title">DRONE D’ESCORTE</div><div id="shopDroneUpgrades" class="upgrade-list"></div></div><div class="panel-section"><h3>COLLECTION DE VAISSEAUX · 20 MODÈLES</h3><p class="panel-desc">20 chasseurs 2D détaillés : coques futuristes, verrières, blindage, canons et réacteurs néon.</p><div id="shopSkins" class="shop-grid"></div></div><div class="panel-section"><h3>SKINS DE TON ESCORTE</h3><p class="panel-desc">Ton drone a sa propre collection : ces skins sont achetés séparément et ne changent jamais quand tu modifies ton vaisseau.</p><div id="shopDroneSkins" class="shop-grid"></div></div><p class="panel-desc">Les achats sont sauvegardés localement sur cet appareil.</p></div></section>
+  <section id="coopPanel" class="side-panel hidden"><div class="panel-head"><div><div class="section-kicker">MULTIJOUEUR</div><h2>COOP EN LIGNE</h2></div><button class="close-panel" data-close>✕</button></div><div class="panel-content">
+    <div class="panel-section p2p-room-tools">
+      <h3>CRÉER OU REJOINDRE UN SALON</h3>
+      <p class="panel-desc">L’hôte crée un salon et partage son code ou son lien. L’autre joueur ouvre le même site et rejoint avec ce code. Aucune inscription n’est nécessaire.</p>
+      <button class="btn-primary full" id="quickCreateRoom">CRÉER UN SALON →</button>
+      <div class="p2p-join-row"><input id="quickJoinCode" maxlength="6" autocomplete="off" placeholder="CODE DU SALON"><button id="quickJoinRoom">REJOINDRE</button></div>
+      <p class="coop-message" id="p2pStatus">Prêt à créer ou rejoindre un salon.</p>
+    </div>
+    <div class="panel-section room-lobby hidden" id="roomLobby"><h3>SALON COOP</h3><div class="room-code-label">CODE DU SALON</div><div class="room-code" id="roomCodeDisplay">------</div><button class="btn-secondary full" id="copyRoomCodeButton">COPIER LE LIEN D’INVITATION</button><p id="roomStatusText" class="coop-message">En attente du deuxième joueur…</p><button class="btn-primary full" id="startCoopButton" disabled>LANCER LA PARTIE →</button><button class="btn-secondary full" id="cancelRoomButton">ANNULER LE SALON</button></div>
+  </div></section>
+  <div id="touchControls" class="touch-controls hidden"><div id="joystickBase" class="joystick-base"><div id="joystickKnob" class="joystick-knob"></div><span>MOVE</span></div><div class="touch-actions"><button id="touchFire" class="touch-fire">TIRER</button><button id="touchDash" class="touch-dash">DASH</button><button id="touchNuke" class="touch-nuke">NUKE</button></div></div>
+  <div id="toast" class="toast hidden"></div>
+  <div id="levelFlash" class="level-flash hidden"><span>VAGUE</span><b id="flashWave">02</b></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
