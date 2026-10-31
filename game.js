@@ -405,7 +405,7 @@ function handlePeerMessage(message){
 }
 function attachPeerConnection(conn,role,session=onlineSession){
  if(!session||onlineSession!==session){try{conn.close();}catch(e){}return;}
- rtcConnection=conn;
+ rtcConnection=conn;hookIceStats(conn);
  session.channel=makePeerWrapper(conn);
  session.transport='peerjs';
  let opened=false;
@@ -413,7 +413,7 @@ function attachPeerConnection(conn,role,session=onlineSession){
   if(opened||onlineSession!==session)return;
   const pc=conn.peerConnection;
   const iceState=pc?.iceConnectionState||pc?.connectionState||'non disponible';
-  const message=`Le salon a été trouvé, mais le canal réseau ne s’est pas ouvert (${iceState}). Le jeu a essayé STUN et le relais TURN public Open Relay. Le réseau peut encore bloquer WebRTC. Annule le salon, recrée-en un et réessaie.`;
+  const message=`Le canal réseau ne s’est pas ouvert (${iceState} · ${iceSummary(conn)}). Si relais:0, aucun serveur TURN n’a répondu. Annule, recrée un salon et réessaie.`;
   setP2PStatus(message);
   $('roomStatusText').textContent=message;
  },20000);
@@ -452,7 +452,7 @@ function attachPeerConnection(conn,role,session=onlineSession){
   pc.addEventListener('iceconnectionstatechange',()=>{
    if(onlineSession!==session||opened)return;
    if(pc.iceConnectionState==='failed'){
-    const message='Le réseau a refusé la connexion WebRTC. Le jeu utilise STUN et le relais TURN public Open Relay; vérifie aussi qu’aucun des deux appareils ne bloque WebRTC.';
+    const message=`Le réseau a refusé la connexion WebRTC. (${iceSummary(conn)}) Vérifie aussi qu’aucun des deux appareils ne bloque WebRTC.`;
     setP2PStatus(message);$('roomStatusText').textContent=message;
    }
   });
@@ -471,16 +471,28 @@ function makeRoomCode(){
  else for(let i=0;i<6;i++)values[i]=Math.floor(Math.random()*0xFFFFFFFF);
  return Array.from(values,v=>alphabet[v%alphabet.length]).join('');
 }
-// Public Open Relay TURN fallback (Metered/Open Relay published demo credentials).
-// STUN handles direct paths; TURN relays traffic when NAT/firewalls block P2P.
+// Config ICE = celle PAR DÉFAUT de PeerJS (STUN Google + TURN peerjs.com) + STUN en plus.
+// L'ancien Open Relay (openrelayproject) n'est plus fiable : sans STUN/TURN qui répondent,
+// deux appareils sur des réseaux différents ne peuvent jamais ouvrir le canal.
 const NEON_ICE_CONFIG={
  iceServers:[
-  {urls:'stun:openrelay.metered.ca:80'},
-  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
- ],iceCandidatePoolSize:4
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:stun.cloudflare.com:3478'},
+  {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}
+ ],
+ sdpSemantics:'unified-plan'
 };
+// Compte les types de candidats ICE (host / srflx / relay) pour le diagnostic.
+function hookIceStats(conn){
+ const stats={host:0,srflx:0,relay:0,prflx:0};conn._neonIce=stats;
+ let tries=0;const t=setInterval(()=>{
+  const pc=conn.peerConnection;
+  if(pc&&pc.addEventListener){clearInterval(t);pc.addEventListener('icecandidate',e=>{const c=e.candidate&&e.candidate.candidate||'';const m=c.match(/ typ (\w+)/);if(m&&stats[m[1]]!==undefined)stats[m[1]]++;});}
+  else if(++tries>40)clearInterval(t);
+ },100);
+}
+function iceSummary(conn){const s=conn?._neonIce;return s?`candidats host:${s.host} stun:${s.srflx} relais:${s.relay}`:'candidats inconnus';}
 function createQuickRoom(){
  if(!window.Peer){setP2PStatus('La bibliothèque multijoueur n’a pas chargé. Recharge la page et réessaie.');return;}
  cleanupPeerRoom();
@@ -508,6 +520,11 @@ function createQuickRoom(){
    $('roomCodeDisplay').textContent=short;
    $('roomStatusText').textContent='Salon créé. Partage le code au deuxième joueur.';
    setP2PStatus('Salon prêt. Partage le code à 6 caractères.');
+  });
+  rtcPeer.on('disconnected',()=>{
+   if(onlineSession!==session||rtcPeer?.destroyed)return;
+   setP2PStatus('Salon déconnecté du serveur, reconnexion…');
+   try{rtcPeer.reconnect();}catch(e){}
   });
   rtcPeer.on('connection',conn=>{
    if(onlineSession!==session){conn.close();return;}
@@ -538,12 +555,14 @@ function joinQuickRoom(){
  $('cancelRoomButton').onclick=cancelRoom;
  setP2PStatus('Connexion au service de salons…');
  try{
+  const openTimer=setTimeout(()=>{if(onlineSession===session&&!rtcConnection){const m='Impossible de joindre le serveur de salons PeerJS (0.peerjs.com). Vérifie ta connexion / bloqueur de pub, puis réessaie.';setP2PStatus(m);$('roomStatusText').textContent=m;}},12000);
   rtcPeer=new window.Peer({debug:1,config:NEON_ICE_CONFIG});
   rtcPeer.on('open',()=>{
+   clearTimeout(openTimer);
    if(onlineSession!==session)return;
    const peerId='neonoutpost-'+code.toLowerCase();
-   $('roomStatusText').textContent='Salon trouvé. Ouverture de la connexion…';
-   setP2PStatus('Salon trouvé. Ouverture du canal réseau…');
+   $('roomStatusText').textContent='Connexion au salon en cours…';
+   setP2PStatus('Ouverture du canal réseau…');
    rtcConnection=rtcPeer.connect(peerId,{reliable:true,serialization:'json'});
    attachPeerConnection(rtcConnection,'guest',session);
    $('quickJoinCode').value='';
