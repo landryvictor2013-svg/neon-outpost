@@ -35,3 +35,7 @@ Le coop fonctionne entre PC et mobile. Chaque joueur choisit son type de command
 
 CORRECTIF RÉSEAU — CONFIGURATION PEERJS RESTAURÉE
 La version précédente fournissait explicitement une liste ICE contenant seulement STUN; cela remplaçait les valeurs par défaut de PeerJS et retirait ses relais TURN. Cette version n’envoie plus d’option `config` au constructeur PeerJS : elle réutilise les serveurs STUN/TURN intégrés. Si une connexion ne s’ouvre toujours pas après 20 secondes, le salon affiche maintenant un diagnostic au lieu de rester indéfiniment sur « Ouverture de la connexion ».
+
+
+CONFIGURATION RÉSEAU RENFORCÉE
+Les deux clients (hôte et invité) reçoivent une configuration ICE explicite : STUN + relais TURN Open Relay sur les ports 80 et 443, avec TCP sur 443. Cela permet de tenter un relais quand une connexion directe est bloquée par le NAT ou le pare-feu. Open Relay est un service public tiers : sa disponibilité, ses limites et ses conditions peuvent changer; aucun service public ne garantit 100 % des réseaux.
